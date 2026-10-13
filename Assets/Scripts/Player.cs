@@ -4,11 +4,15 @@ using UnityEngine.InputSystem;
 public class Player : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 5.0f; // 移動速度
-    [SerializeField] private float jumpForce = 20.0f; // ジャンプの高さ
+    [SerializeField] private float jumpForce = 5.0f; // ジャンプの高さ
+
+    [SerializeField] private Transform groundCheck; // プレイヤーの足元に置く空のオブジェクトの位置
+    [SerializeField] private LayerMask groundLayer; // 地面として認識するレイヤー
+    private float checkRadius = 0.3f; // 足元の判定円の大きさ
 
     private Rigidbody2D rb; // Rigidbody2Dの情報を入れる
     private SpriteRenderer sr; // SpriteRendererの情報を入れる
-
+    
     public bool isOnGround = false; // 地面に足がついているならtrue
     private const string groundTag = "Ground"; // 地面タグの名前
 
@@ -25,6 +29,15 @@ public class Player : MonoBehaviour
         Walk();
         Jump();
     }
+
+    void FixedUpdate()
+    {
+        if (groundCheck != null)
+        {
+            isOnGround = Physics2D.OverlapCircle(groundCheck.position, checkRadius, groundLayer);
+        }
+    }
+
     /// <summary>
     /// プレイヤーの移動処理
     /// </summary>
@@ -42,7 +55,7 @@ public class Player : MonoBehaviour
             sr.flipX = true; // 画像を反転させる
         }
 
-        rb.linearVelocity = new Vector2(direction* moveSpeed, rb.linearVelocityY);
+        rb.linearVelocity = new Vector2(direction * moveSpeed, rb.linearVelocityY);
     }
 
     /// <summary>
@@ -50,39 +63,22 @@ public class Player : MonoBehaviour
     /// </summary>
     private void Jump()
     {
-        if (Keyboard.current.spaceKey.isPressed && isOnGround == true)
+        if (Keyboard.current.spaceKey.wasPressedThisFrame && isOnGround == true)
         {
-            isOnGround = false;
+            //rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
             rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
         }
     }
 
-    private void OnCollisionStay2D(Collision2D collision)
+    /// <summary>
+    /// Unityエディタ上でプレイヤーの足元の判定範囲を赤い円で表示する
+    /// </summary>
+    private void OnDrawGizmosSelected()
     {
-       // 地面にぶつかっていないなら戻る
-       if (!collision.gameObject.CompareTag(groundTag))
-       {
-            return;
-       }
-
-       for (int count = 0; count < collision.contactCount; count++)
-       {
-            ContactPoint2D contact = collision.GetContact(count);
-
-            // 上向きの面に接触しているか確認
-            if (contact.normal.y > 0.5f)
-            {
-                isOnGround = true;
-                return;
-            }
-       }
-    }
-
-    private void OnCollisionExit2D(Collision2D collision)
-    {
-        if (collision.gameObject.CompareTag(groundTag))
+        if (groundCheck != null)
         {
-            isOnGround = false;
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(groundCheck.position, checkRadius);
         }
     }
 }
