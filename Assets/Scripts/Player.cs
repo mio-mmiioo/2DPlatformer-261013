@@ -65,7 +65,6 @@ public class Player : MonoBehaviour
     {
         if (Keyboard.current.spaceKey.wasPressedThisFrame && isOnGround == true)
         {
-            //rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
             rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
         }
     }
